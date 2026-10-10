@@ -2,6 +2,8 @@
 
 **Connect. Learn. Teach.**
 
+ClassBridge is a modern multi-institution online learning platform that connects students, lecturers, and administrators through virtual classrooms, live video classes, courses, assignments, assessments, results, attendance, recordings, and academic management tools. Osman Tholley is the Developer.
+
 Multi-institution education platform. Transit College is the first tenant, not a hardcoded product.
 
 ## Documentation
@@ -16,10 +18,6 @@ Multi-institution education platform. Transit College is the first tenant, not a
 | [docs/DEVELOPMENT_ROADMAP.md](docs/DEVELOPMENT_ROADMAP.md) | Phased delivery |
 
 The Next.js application lives in [`frontend/`](frontend/).
-
-## Current phase
-
-**Phase 2 — Database foundation.** Next: Phase 3 (design system + public site) after approval.
 
 ## Quick start
 
