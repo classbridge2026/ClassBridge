@@ -1,0 +1,668 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InstitutionStatus {
+  ACTIVE
+  INACTIVE
+  TRASHED
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum RoleKey {
+  SUPER_ADMIN
+  INSTITUTION_ADMIN
+  LECTURER
+  STUDENT
+}
+
+enum CourseStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum AcademicStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Institution {
+  id              String            @id @default(uuid())
+  name            String
+  slug            String            @unique
+  status          InstitutionStatus @default(ACTIVE)
+  timezone        String            @default("UTC")
+  email           String?
+  phone           String?
+  website         String?
+  address         String?
+  country         String?
+  city            String?
+  description     String?
+  logoStorageKey  String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  memberships      InstitutionUser[]
+  studentProfiles  StudentProfile[]
+  lecturerProfiles LecturerProfile[]
+  departments      Department[]
+  programs         Program[]
+  courses          Course[]
+  sessions         ClassSession[]
+  notifications    Notification[]
+  materials        LearningMaterial[]
+  assignments      Assignment[]
+  assessments      Assessment[]
+  conversations    Conversation[]
+  subscription     Subscription?
+  auditLogs        AuditLog[]
+
+  @@index([status])
+}
+
+model Department {
+  id            String         @id @default(uuid())
+  institutionId String
+  name          String
+  code          String
+  description   String?
+  status        AcademicStatus @default(ACTIVE)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  institution Institution       @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  programs    Program[]
+  courses     Course[]
+  lecturers   LecturerProfile[]
+  students    StudentProfile[]
+
+  @@unique([institutionId, code])
+  @@index([institutionId])
+  @@index([institutionId, status])
+}
+
+model Program {
+  id            String         @id @default(uuid())
+  institutionId String
+  departmentId  String?
+  name          String
+  code          String
+  description   String?
+  durationMonths Int?
+  status        AcademicStatus @default(ACTIVE)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  institution Institution     @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  department  Department?     @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  courses     Course[]
+  students    StudentProfile[]
+
+  @@unique([institutionId, code])
+  @@index([institutionId])
+  @@index([departmentId])
+  @@index([institutionId, status])
+}
+
+model User {
+  id                   String     @id @default(uuid())
+  email                String     @unique
+  passwordHash         String
+  fullName             String
+  avatarStorageKey     String?
+  phone                String?
+  status               UserStatus @default(PENDING)
+  emailVerifiedAt      DateTime?
+  isPlatformSuperAdmin Boolean    @default(false)
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+
+  memberships               InstitutionUser[]
+  passwordResetTokens       PasswordResetToken[]
+  notifications             Notification[]
+  notificationPreferences   NotificationPreference[]
+  materialsCreated          LearningMaterial[]       @relation("MaterialCreator")
+  assignmentsCreated        Assignment[]             @relation("AssignmentCreator")
+  assignmentSubmissions     AssignmentSubmission[]
+  assessmentsCreated        Assessment[]             @relation("AssessmentCreator")
+  assessmentAttempts        AssessmentAttempt[]
+  conversationParticipants  ConversationParticipant[]
+  messagesSent              Message[]                @relation("MessageSender")
+  classChatMessages         ClassChatMessage[]
+  auditLogs                 AuditLog[]               @relation("AuditActor")
+
+  @@index([status])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Role {
+  id        String   @id @default(uuid())
+  key       RoleKey  @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships InstitutionUser[]
+}
+
+model InstitutionUser {
+  id            String           @id @default(uuid())
+  institutionId String
+  userId        String
+  roleId        String
+  status        MembershipStatus @default(ACTIVE)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  role        Role        @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  studentProfile  StudentProfile?
+  lecturerProfile LecturerProfile?
+
+  @@unique([institutionId, userId])
+  @@index([userId])
+  @@index([roleId])
+  @@index([institutionId, status])
+}
+
+model StudentProfile {
+  id                String   @id @default(uuid())
+  institutionId     String
+  institutionUserId String   @unique
+  studentNumber     String?
+  departmentId      String?
+  programId         String?
+  extra             Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  institution     Institution     @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  institutionUser InstitutionUser @relation(fields: [institutionUserId], references: [id], onDelete: Cascade)
+  department      Department?     @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  program         Program?        @relation(fields: [programId], references: [id], onDelete: SetNull)
+  enrollments     CourseEnrollment[]
+  attendance      ClassAttendance[]
+
+  @@unique([institutionId, studentNumber])
+  @@index([institutionId])
+  @@index([departmentId])
+  @@index([programId])
+}
+
+model LecturerProfile {
+  id                String   @id @default(uuid())
+  institutionId     String
+  institutionUserId String   @unique
+  departmentId      String?
+  title             String?
+  bio               String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  institution     Institution     @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  institutionUser InstitutionUser @relation(fields: [institutionUserId], references: [id], onDelete: Cascade)
+  department      Department?     @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  courses         Course[]
+
+  @@index([institutionId])
+  @@index([departmentId])
+}
+
+model Course {
+  id                String       @id @default(uuid())
+  institutionId     String
+  lecturerProfileId String?
+  departmentId      String?
+  programId         String?
+  code              String
+  title             String
+  description       String?
+  status            CourseStatus @default(ACTIVE)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  institution     Institution      @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  lecturerProfile LecturerProfile? @relation(fields: [lecturerProfileId], references: [id], onDelete: SetNull)
+  department      Department?      @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  program         Program?         @relation(fields: [programId], references: [id], onDelete: SetNull)
+  modules         CourseModule[]
+  enrollments     CourseEnrollment[]
+  sessions        ClassSession[]
+  materials       LearningMaterial[]
+  assignments     Assignment[]
+  assessments     Assessment[]
+
+  @@unique([institutionId, code])
+  @@index([institutionId])
+  @@index([lecturerProfileId])
+  @@index([departmentId])
+  @@index([programId])
+}
+
+model CourseModule {
+  id          String   @id @default(uuid())
+  courseId    String
+  title       String
+  description String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course    Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  materials LearningMaterial[]
+
+  @@index([courseId])
+}
+
+model CourseEnrollment {
+  id               String   @id @default(uuid())
+  courseId         String
+  studentProfileId String
+  enrolledAt       DateTime @default(now())
+
+  course         Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentProfileId])
+  @@index([courseId])
+  @@index([studentProfileId])
+}
+
+enum SessionStatus {
+  DRAFT
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  LATE
+  ABSENT
+}
+
+enum ClassChatMessageType {
+  MESSAGE
+  ANNOUNCEMENT
+}
+
+model ClassSession {
+  id             String        @id @default(uuid())
+  institutionId  String
+  courseId       String
+  title          String
+  description    String?
+  roomName       String
+  status         SessionStatus @default(SCHEDULED)
+  scheduledStart DateTime?
+  scheduledEnd   DateTime?
+  startedAt      DateTime?
+  endedAt        DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  institution Institution        @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  course      Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  attendance  ClassAttendance[]
+  recordings  ClassRecording[]
+  chatMessages ClassChatMessage[]
+
+  @@index([institutionId])
+  @@index([courseId])
+  @@index([status])
+  @@index([scheduledStart])
+}
+
+model ClassChatMessage {
+  id        String               @id @default(uuid())
+  sessionId String
+  senderId  String
+  body      String               @db.VarChar(2000)
+  type      ClassChatMessageType @default(MESSAGE)
+  createdAt DateTime             @default(now())
+
+  session ClassSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sender  User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@index([senderId])
+}
+
+model ClassAttendance {
+  id               String           @id @default(uuid())
+  sessionId        String
+  studentProfileId String
+  joinedAt         DateTime         @default(now())
+  leftAt           DateTime?
+  durationMinutes  Int              @default(0)
+  status           AttendanceStatus @default(PRESENT)
+  createdAt        DateTime         @default(now())
+
+  session        ClassSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  studentProfile StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, studentProfileId])
+  @@index([sessionId])
+  @@index([studentProfileId])
+}
+
+model ClassRecording {
+  id              String   @id @default(uuid())
+  sessionId       String
+  title           String
+  storageKey      String?
+  durationSeconds Int      @default(0)
+  fileSizeBytes   BigInt   @default(0)
+  createdAt       DateTime @default(now())
+
+  session ClassSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}
+
+enum NotificationType {
+  CLASS_REMINDER
+  RECORDING_PUBLISHED
+  ENROLLMENT
+  ANNOUNCEMENT
+  ASSIGNMENT
+  ASSESSMENT
+  MESSAGE
+  SYSTEM
+}
+
+model Notification {
+  id             String           @id @default(uuid())
+  institutionId  String?
+  userId         String
+  type           NotificationType
+  title          String
+  body           String
+  resourceType   String?
+  resourceId     String?
+  readAt         DateTime?
+  createdAt      DateTime         @default(now())
+
+  institution Institution? @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@index([institutionId, createdAt])
+}
+
+model NotificationPreference {
+  id            String  @id @default(uuid())
+  userId        String
+  institutionId String?
+  emailEnabled  Boolean @default(true)
+  inAppEnabled  Boolean @default(true)
+  classReminders Boolean @default(true)
+  announcements  Boolean @default(true)
+  assignments    Boolean @default(true)
+  messages       Boolean @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, institutionId])
+  @@index([userId])
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  actorUserId   String?
+  institutionId String?
+  action        String
+  resourceType  String
+  resourceId    String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  actor       User?        @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  institution Institution? @relation(fields: [institutionId], references: [id], onDelete: SetNull)
+
+  @@index([institutionId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([action])
+}
+
+model LearningMaterial {
+  id              String   @id @default(uuid())
+  institutionId   String
+  courseId        String
+  moduleId        String?
+  title           String
+  fileName        String
+  contentType     String
+  byteSize        Int
+  storageKey      String
+  createdByUserId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  institution Institution  @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  module      CourseModule? @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+  createdBy   User         @relation("MaterialCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@index([institutionId])
+  @@index([courseId])
+  @@index([moduleId])
+}
+
+model Assignment {
+  id              String    @id @default(uuid())
+  institutionId   String
+  courseId        String
+  title           String
+  description     String?
+  dueAt           DateTime?
+  published       Boolean   @default(false)
+  createdByUserId String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  institution Institution            @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  course      Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdBy   User                   @relation("AssignmentCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  submissions AssignmentSubmission[]
+
+  @@index([institutionId])
+  @@index([courseId])
+}
+
+model AssignmentSubmission {
+  id            String    @id @default(uuid())
+  assignmentId  String
+  userId        String
+  textContent   String?
+  storageKey    String?
+  fileName      String?
+  submittedAt   DateTime  @default(now())
+  grade         Float?
+  feedback      String?
+  gradedAt      DateTime?
+  gradedByUserId String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, userId])
+  @@index([assignmentId])
+  @@index([userId])
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+}
+
+model Assessment {
+  id              String   @id @default(uuid())
+  institutionId   String
+  courseId        String
+  title           String
+  description     String?
+  published       Boolean  @default(false)
+  timeLimitMins   Int?
+  createdByUserId String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  institution Institution          @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  course      Course               @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdBy   User                 @relation("AssessmentCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  questions   AssessmentQuestion[]
+  attempts    AssessmentAttempt[]
+
+  @@index([institutionId])
+  @@index([courseId])
+}
+
+model AssessmentQuestion {
+  id           String       @id @default(uuid())
+  assessmentId String
+  prompt       String
+  type         QuestionType @default(MULTIPLE_CHOICE)
+  options      Json?
+  correctAnswer String
+  points       Int          @default(1)
+  sortOrder    Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId])
+}
+
+model AssessmentAttempt {
+  id           String    @id @default(uuid())
+  assessmentId String
+  userId       String
+  answers      Json
+  score        Float?
+  maxScore     Float?
+  submittedAt  DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([assessmentId, userId])
+  @@index([assessmentId])
+  @@index([userId])
+}
+
+model Conversation {
+  id            String   @id @default(uuid())
+  institutionId String
+  subject       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  institution  Institution               @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([institutionId])
+}
+
+model ConversationParticipant {
+  id             String   @id @default(uuid())
+  conversationId String
+  userId         String
+  lastReadAt     DateTime?
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  senderId       String
+  body           String
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+}
+
+enum SubscriptionPlan {
+  TRIAL
+  STARTER
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+
+model Subscription {
+  id                 String             @id @default(uuid())
+  institutionId      String             @unique
+  planKey            SubscriptionPlan   @default(TRIAL)
+  status             SubscriptionStatus @default(TRIALING)
+  seatLimit          Int                @default(50)
+  currentPeriodStart DateTime           @default(now())
+  currentPeriodEnd   DateTime
+  notes              String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([planKey])
+}
+

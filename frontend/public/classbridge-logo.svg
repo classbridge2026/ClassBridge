@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="capGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0066FF" />
+      <stop offset="50%" stop-color="#0052CC" />
+      <stop offset="100%" stop-color="#002B66" />
+    </linearGradient>
+    <linearGradient id="blueAccent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0066FF" />
+      <stop offset="100%" stop-color="#0044CC" />
+    </linearGradient>
+  </defs>
+
+  <!-- LOGO MARK -->
+  <g id="LogoMark">
+    <!-- Graduation Cap Top Diamond -->
+    <polygon points="250,15 340,55 250,85 160,55" fill="url(#capGrad)" />
+    
+    <!-- Cap Under Base -->
+    <path d="M 195 67 L 195 85 Q 250 105 305 85 L 305 67 Q 250 85 195 67 Z" fill="#003399" />
+    
+    <!-- Cap Tassel -->
+    <path d="M 330 52 L 335 85 L 340 85 L 337 100 L 331 100 L 328 85 L 330 52 Z" fill="#0066FF" />
+    <circle cx="334" cy="100" r="4" fill="#0052CC" />
+
+    <!-- Arch Bridge Structure -->
+    <!-- Pillars -->
+    <rect x="165" y="80" width="16" height="55" rx="3" fill="#0052CC" />
+    <rect x="319" y="80" width="16" height="55" rx="3" fill="#0052CC" />
+    <!-- Arch -->
+    <path d="M 140 135 C 170 85 330 85 360 135 C 330 100 170 100 140 135 Z" fill="url(#capGrad)" />
+
+    <!-- Open Book - Green Accent Pages -->
+    <path d="M 110 160 C 160 140 235 150 250 175 C 235 160 160 152 110 160 Z" fill="#28A745" />
+    <path d="M 390 160 C 340 140 265 150 250 175 C 265 160 340 152 390 160 Z" fill="#28A745" />
+
+    <!-- Open Book - Blue Base Pages -->
+    <path d="M 120 172 C 170 155 235 165 250 185 C 235 172 170 165 120 172 Z" fill="#0066FF" />
+    <path d="M 380 172 C 330 155 265 165 250 185 C 265 172 330 165 380 172 Z" fill="#0066FF" />
+  </g>
+
+  <!-- LOGO TEXT -->
+  <g id="LogoText" font-family="'Inter', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="900" font-size="52" letter-spacing="-1">
+    <text x="25" y="230" fill="#002B66">CLASS</text>
+    <text x="238" y="230" fill="#0066FF">BRIDGE</text>
+  </g>
+</svg>
