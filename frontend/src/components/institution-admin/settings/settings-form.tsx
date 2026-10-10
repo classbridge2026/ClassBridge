@@ -1,9 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { updateInstitutionSettingsAction } from "@/features/institution-admin/settings-actions";
 import { Field, TextAreaField } from "@/components/institution-admin/shared/form-dialog";
 import { Button } from "@/components/ui/button";
+import { InstitutionLogoMark } from "@/components/shared/institution-logo-mark";
+import { useActionAlerts } from "@/hooks/use-action-alerts";
 
 export type InstitutionSettingsValues = {
   name: string;
@@ -15,13 +17,71 @@ export type InstitutionSettingsValues = {
   city: string | null;
   description: string | null;
   timezone: string;
+  logoUrl: string | null;
 };
 
 export function InstitutionSettingsForm({ values }: { values: InstitutionSettingsValues }) {
   const [state, formAction, pending] = useActionState(updateInstitutionSettingsAction, null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [removeLogo, setRemoveLogo] = useState(false);
+  useActionAlerts(state, { successTitle: "Settings saved", errorTitle: "Could not save settings" });
+
+  const shownLogo = removeLogo ? null : preview ?? values.logoUrl;
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={formAction} encType="multipart/form-data" className="space-y-6">
+      {removeLogo ? <input type="hidden" name="removeLogo" value="1" /> : null}
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h3 className="text-sm font-bold text-slate-900">Institution logo</h3>
+        <p className="mt-1 text-xs text-slate-500">
+          Shown on campus portals (admin, lecturer, student). Stored locally — no cloud storage
+          required. PNG, JPG, WebP, or SVG · max 2 MB.
+        </p>
+        <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+          <InstitutionLogoMark
+            name={values.name}
+            logoUrl={shownLogo}
+            tone="on-light"
+            className="sm:items-center"
+          />
+          <div className="min-w-0 flex-1 space-y-3">
+            <label className="block space-y-1.5 text-left text-xs">
+              <span className="block font-semibold text-slate-700">Upload logo</span>
+              <input
+                name="logo"
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                disabled={removeLogo}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) {
+                    setPreview(null);
+                    return;
+                  }
+                  setRemoveLogo(false);
+                  setPreview(URL.createObjectURL(file));
+                }}
+                className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-blue-700 hover:file:bg-blue-100"
+              />
+            </label>
+            {values.logoUrl || preview ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  setRemoveLogo(true);
+                  setPreview(null);
+                }}
+              >
+                Remove logo
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 className="text-sm font-bold text-slate-900">Institution profile</h3>
         <p className="mt-1 text-xs text-slate-500">Public campus identity and contact details.</p>
@@ -54,15 +114,6 @@ export function InstitutionSettingsForm({ values }: { values: InstitutionSetting
           available from student, lecturer, and administrator detail screens.
         </p>
       </section>
-
-      {state?.error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700">{state.error}</p>
-      ) : null}
-      {state?.ok && state.message ? (
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
-          {state.message}
-        </p>
-      ) : null}
 
       <div className="flex justify-end">
         <Button type="submit" disabled={pending}>

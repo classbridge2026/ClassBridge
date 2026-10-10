@@ -9,6 +9,7 @@ import {
   submitGradeSubmission,
   type AssignmentFormState,
 } from "./actions";
+import { formatDateTime } from "@/lib/utils";
 
 export type AssignmentListItem = {
   id: string;
@@ -126,7 +127,7 @@ export function AssignmentsPanel({
                   )}
                   <p className="mt-2 text-[11px] text-slate-500">
                     {a.published ? "Published" : "Draft"}
-                    {a.dueAt ? ` · Due ${new Date(a.dueAt).toLocaleString()}` : ""}
+                    {a.dueAt ? ` · Due ${formatDateTime(a.dueAt)}` : ""}
                     {canManage ? ` · ${a.submissionCount} submissions` : ""}
                   </p>
                 </div>

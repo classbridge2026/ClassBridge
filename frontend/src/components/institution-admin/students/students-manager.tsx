@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { MembershipStatus } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,9 @@ import {
   updateStudentAction,
 } from "@/features/institution-admin/people-actions";
 import type { ActionFormState } from "@/features/institution-admin/form-state";
+import { isLikelyGoogleEmail } from "@/lib/email/google-email-shared";
+import { cn } from "@/lib/utils";
+import { useActionAlerts } from "@/hooks/use-action-alerts";
 
 export type Option = { value: string; label: string };
 
@@ -57,7 +60,7 @@ export function StudentsManager({
       defaultOpen={defaultCreateOpen}
     >
       <Field label="Full name" name="fullName" required />
-      <Field label="Email" name="email" type="email" required />
+      <GoogleEmailField />
       <Field label="Student ID" name="studentNumber" placeholder="Optional" />
       <SelectField label="Department" name="departmentId" options={departments} />
       <SelectField label="Program" name="programId" options={programs} />
@@ -145,29 +148,53 @@ export function StudentStatusActions({
   );
 }
 
-/** Compact View / Edit / Suspend actions for the students table. */
-export function StudentRowActions({
-  student,
-  departments,
-  programs,
-}: {
-  student: StudentEditData & { fullName: string };
-  departments: Option[];
-  programs: Option[];
-}) {
+/** View action for the students table (edit/suspend live on the detail page). */
+export function StudentRowActions({ studentId }: { studentId: string }) {
   return (
     <TableActions>
       <IconActionLink
-        href={`/institution-admin/students/${student.id}`}
+        href={`/institution-admin/students/${studentId}`}
         title="View"
       />
-      <StudentEditDialog student={student} departments={departments} programs={programs} />
-      <StudentStatusActions
-        studentId={student.id}
-        status={student.status}
-        studentName={student.fullName}
-      />
     </TableActions>
+  );
+}
+
+function GoogleEmailField() {
+  const [email, setEmail] = useState("");
+  const touched = email.includes("@");
+  const looksGoogle = isLikelyGoogleEmail(email);
+  const hint =
+    !touched
+      ? "Must be a Google-connected email (Gmail or Google Workspace)."
+      : looksGoogle
+        ? "Looks like Gmail — invite can be delivered."
+        : "We’ll verify Google Workspace MX on submit. Prefer Gmail if unsure.";
+
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor="student-email" className="block text-xs font-semibold text-slate-700">
+        Email <span className="text-red-500">*</span>
+      </label>
+      <input
+        id="student-email"
+        name="email"
+        type="email"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="name@gmail.com"
+        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-blue-500/30 focus:border-blue-400 focus:ring-2"
+      />
+      <p
+        className={cn(
+          "text-[11px]",
+          touched && looksGoogle ? "font-medium text-emerald-600" : "text-slate-500",
+        )}
+      >
+        {hint}
+      </p>
+    </div>
   );
 }
 
@@ -176,6 +203,7 @@ export function ResetPasswordForm({ userId }: { userId: string }) {
     resetUserPasswordAction,
     null as ActionFormState | null,
   );
+  useActionAlerts(state, { successTitle: "Password reset", errorTitle: "Could not reset password" });
 
   return (
     <form action={formAction} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
@@ -190,14 +218,6 @@ export function ResetPasswordForm({ userId }: { userId: string }) {
         type="password"
         placeholder="Min. 8 characters (optional)"
       />
-      {state?.error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700">{state.error}</p>
-      ) : null}
-      {state?.ok && state.message ? (
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
-          {state.message}
-        </p>
-      ) : null}
       <Button type="submit" size="sm" disabled={pending}>
         {pending ? "Resetting…" : "Reset password"}
       </Button>

@@ -9,10 +9,12 @@ import { cn } from "@/lib/utils";
 export function InstitutionAdminShell({
   institutionName,
   profile,
+  allowedHrefs,
   children,
 }: {
   institutionName: string;
   profile: { fullName: string; email: string; avatarInitials: string; roleLabel: string };
+  allowedHrefs?: string[] | null;
   children: ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -41,6 +43,7 @@ export function InstitutionAdminShell({
             institutionName={institutionName}
             collapsed={collapsed}
             onToggleCollapsed={() => setCollapsed((value) => !value)}
+            allowedHrefs={allowedHrefs}
           />
         </div>
       </div>
@@ -78,6 +81,7 @@ export function InstitutionAdminShell({
             <InstitutionAdminSidebar
               institutionName={institutionName}
               onNavigate={() => setMobileOpen(false)}
+              allowedHrefs={allowedHrefs}
             />
           </div>
         </div>

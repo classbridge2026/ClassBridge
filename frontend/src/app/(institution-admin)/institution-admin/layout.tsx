@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
 import { prisma } from "@/lib/db/prisma";
 import { requireInstitutionAdmin } from "@/lib/permissions/institution-admin";
+import {
+  filterNavHrefsForRole,
+  staffRoleLabel,
+} from "@/lib/permissions/institution-privileges";
+import { INST_ADMIN_NAV } from "@/components/institution-admin/layout/nav-config";
 import { InstitutionAdminShell } from "@/components/institution-admin/layout/shell";
 
 function initials(fullName: string) {
@@ -15,7 +20,12 @@ export default async function InstitutionAdminLayout({
 }: {
   children: ReactNode;
 }) {
-  const { user, institutionName } = await requireInstitutionAdmin();
+  const { user, institutionName, roleKey } = await requireInstitutionAdmin();
+
+  const allowedHrefs = filterNavHrefsForRole(
+    roleKey,
+    INST_ADMIN_NAV.map((item) => item.href),
+  );
 
   const dbUser = await prisma.user.findUnique({
     where: { id: user.id },
@@ -28,11 +38,12 @@ export default async function InstitutionAdminLayout({
   return (
     <InstitutionAdminShell
       institutionName={institutionName}
+      allowedHrefs={allowedHrefs}
       profile={{
         fullName,
         email,
         avatarInitials: initials(fullName),
-        roleLabel: "Institution Admin",
+        roleLabel: staffRoleLabel(roleKey),
       }}
     >
       {children}

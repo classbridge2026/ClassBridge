@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { MembershipStatus } from "@prisma/client";
 import { Button } from "@/components/ui/button";
+import { useActionAlerts } from "@/hooks/use-action-alerts";
 import {
   Field,
   FormDialog,
@@ -137,24 +138,13 @@ export function LecturerStatusActions({
   );
 }
 
-export function LecturerRowActions({
-  lecturer,
-  departments,
-}: {
-  lecturer: LecturerEditData;
-  departments: Option[];
-}) {
+/** View action for the lecturers table (edit/suspend live on the detail page). */
+export function LecturerRowActions({ lecturerId }: { lecturerId: string }) {
   return (
     <TableActions>
       <IconActionLink
-        href={`/institution-admin/lecturers/${lecturer.id}`}
+        href={`/institution-admin/lecturers/${lecturerId}`}
         title="View"
-      />
-      <LecturerEditDialog lecturer={lecturer} departments={departments} />
-      <LecturerStatusActions
-        lecturerId={lecturer.id}
-        status={lecturer.status}
-        lecturerName={lecturer.fullName}
       />
     </TableActions>
   );
@@ -165,6 +155,7 @@ export function LecturerResetPasswordForm({ userId }: { userId: string }) {
     resetUserPasswordAction,
     null as ActionFormState | null,
   );
+  useActionAlerts(state, { successTitle: "Password reset", errorTitle: "Could not reset password" });
 
   return (
     <form action={formAction} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
@@ -179,14 +170,6 @@ export function LecturerResetPasswordForm({ userId }: { userId: string }) {
         type="password"
         placeholder="Min. 8 characters (optional)"
       />
-      {state?.error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700">{state.error}</p>
-      ) : null}
-      {state?.ok && state.message ? (
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
-          {state.message}
-        </p>
-      ) : null}
       <Button type="submit" size="sm" disabled={pending}>
         {pending ? "Resetting…" : "Reset password"}
       </Button>

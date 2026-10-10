@@ -52,7 +52,7 @@ export const INST_ADMIN_NAV: InstAdminNavItem[] = [
     href: "/institution-admin/administrators",
     label: "Administrators",
     title: "Administrators",
-    description: "Manage institution administrators for this campus.",
+    description: "Manage Institution Admins and campus officers.",
     icon: Shield,
     group: "People",
   },

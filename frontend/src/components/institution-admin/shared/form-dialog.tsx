@@ -6,6 +6,7 @@ import { faEdit, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
 import type { ActionFormState } from "@/features/institution-admin/form-state";
 import { iconActionClass } from "@/components/institution-admin/shared/table-actions";
+import { showError, showSuccess, toUserMessage } from "@/lib/ui/swal";
 
 export function FormDialog({
   title,
@@ -30,9 +31,19 @@ export function FormDialog({
   const [open, setOpen] = useState(defaultOpen);
   const [state, formAction, pending] = useActionState(
     async (prev: ActionFormState | null, formData: FormData) => {
-      const result = await action(prev, formData);
-      if (result.ok) setOpen(false);
-      return result;
+      try {
+        const result = await action(prev, formData);
+        if (result.ok) {
+          setOpen(false);
+          void showSuccess(result.message ?? "Saved successfully.");
+        } else if (result.error) {
+          void showError(toUserMessage(result.error), "Could not save");
+        }
+        return result;
+      } catch (error) {
+        void showError(error, "Could not save");
+        return { ok: false, error: toUserMessage(error) };
+      }
     },
     null,
   );
@@ -78,12 +89,12 @@ export function FormDialog({
             aria-modal="true"
             className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl"
           >
-            <div className="border-b border-slate-100 px-5 py-4">
+            <div className="border-b border-slate-100 px-5 py-4 text-left">
               <h3 className="text-base font-bold text-slate-900">{title}</h3>
               {description ? <p className="mt-1 text-xs text-slate-500">{description}</p> : null}
             </div>
 
-            <form action={formAction} className="space-y-4 px-5 py-4">
+            <form action={formAction} className="space-y-4 px-5 py-4 text-left">
               {children}
 
               {state?.error ? (
@@ -129,8 +140,8 @@ export function Field({
   placeholder?: string;
 }) {
   return (
-    <label className="block space-y-1.5 text-xs">
-      <span className="font-semibold text-slate-700">
+    <label className="block space-y-1.5 text-left text-xs">
+      <span className="block font-semibold text-slate-700">
         {label}
         {required ? <span className="text-red-500"> *</span> : null}
       </span>
@@ -140,9 +151,9 @@ export function Field({
         required={required}
         defaultValue={defaultValue ?? ""}
         placeholder={placeholder}
-        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-left text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
       />
-      {error ? <span className="text-red-600">{error}</span> : null}
+      {error ? <span className="block text-left text-red-600">{error}</span> : null}
     </label>
   );
 }
@@ -159,13 +170,13 @@ export function TextAreaField({
   rows?: number;
 }) {
   return (
-    <label className="block space-y-1.5 text-xs">
-      <span className="font-semibold text-slate-700">{label}</span>
+    <label className="block space-y-1.5 text-left text-xs">
+      <span className="block font-semibold text-slate-700">{label}</span>
       <textarea
         name={name}
         rows={rows}
         defaultValue={defaultValue ?? ""}
-        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
       />
     </label>
   );
@@ -187,8 +198,8 @@ export function SelectField({
   allowEmptyLabel?: string | null;
 }) {
   return (
-    <label className="block space-y-1.5 text-xs">
-      <span className="font-semibold text-slate-700">
+    <label className="block space-y-1.5 text-left text-xs">
+      <span className="block font-semibold text-slate-700">
         {label}
         {required ? <span className="text-red-500"> *</span> : null}
       </span>
@@ -196,7 +207,7 @@ export function SelectField({
         name={name}
         required={required}
         defaultValue={defaultValue ?? ""}
-        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-left text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
       >
         {allowEmptyLabel !== null ? <option value="">{allowEmptyLabel}</option> : null}
         {options.map((opt) => (

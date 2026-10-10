@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type ReactNode } from "react";
+import { useTransition, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -15,6 +15,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
+import { showConfirm, showError, showSuccess, toUserMessage } from "@/lib/ui/swal";
 
 type Tone = "sky" | "teal" | "amber" | "rose" | "slate";
 
@@ -82,7 +83,12 @@ export function IconActionLink({
 
 export function TableActions({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn("flex flex-wrap items-center justify-end gap-0.5 sm:gap-1", className)}>
+    <div
+      className={cn(
+        "inline-flex flex-nowrap items-center justify-end gap-0.5 sm:gap-1",
+        className,
+      )}
+    >
       {children}
     </div>
   );
@@ -168,7 +174,6 @@ export function SoftDeleteAction({
   mode?: "icon" | "button";
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const title = active
@@ -180,15 +185,43 @@ export function SoftDeleteAction({
     : (confirmInactiveDescription ?? `This will restore the record to active status.`);
   const label = active ? activeLabel : inactiveLabel;
 
+  const runToggle = () => {
+    startTransition(async () => {
+      const confirmed = await showConfirm({
+        title,
+        text: description,
+        confirmText: label,
+        danger: active,
+      });
+      if (!confirmed) return;
+
+      try {
+        const result = (await onToggle()) as { ok?: boolean; error?: string; message?: string } | void;
+        if (result && typeof result === "object" && result.ok === false) {
+          void showError(toUserMessage(result.error), `Could not ${label.toLowerCase()}`);
+          return;
+        }
+        void showSuccess(
+          result && typeof result === "object" && result.message
+            ? result.message
+            : `${entityLabel} ${active ? "deactivated" : "activated"} successfully.`,
+        );
+        router.refresh();
+      } catch (error) {
+        void showError(error, `Could not ${label.toLowerCase()}`);
+      }
+    });
+  };
+
   return (
-    <>
+    <span className="inline-flex shrink-0 items-center">
       {mode === "button" ? (
         <Button
           type="button"
           size="sm"
           variant={active ? "danger" : "primary"}
           disabled={disabled || pending}
-          onClick={() => setOpen(true)}
+          onClick={runToggle}
         >
           <FontAwesomeIcon
             icon={active ? faBan : faCircleCheck}
@@ -203,26 +236,10 @@ export function SoftDeleteAction({
           tone={active ? "rose" : "amber"}
           icon={active ? faBan : faCircleCheck}
           disabled={disabled || pending}
-          onClick={() => setOpen(true)}
+          onClick={runToggle}
         />
       )}
-      <ConfirmActionDialog
-        open={open}
-        title={title}
-        description={description}
-        confirmLabel={label}
-        danger={active}
-        pending={pending}
-        onCancel={() => setOpen(false)}
-        onConfirm={() => {
-          startTransition(async () => {
-            await onToggle();
-            setOpen(false);
-            router.refresh();
-          });
-        }}
-      />
-    </>
+    </span>
   );
 }
 

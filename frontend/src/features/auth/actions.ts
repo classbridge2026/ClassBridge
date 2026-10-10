@@ -148,7 +148,12 @@ export async function submitLogin(
       redirectUrl = "/super-admin";
     } else if (primaryMembership?.roleKey === RoleKey.SUPER_ADMIN) {
       redirectUrl = "/super-admin";
-    } else if (primaryMembership?.roleKey === RoleKey.INSTITUTION_ADMIN) {
+    } else if (
+      primaryMembership?.roleKey === RoleKey.INSTITUTION_ADMIN ||
+      primaryMembership?.roleKey === RoleKey.ADMIN_OFFICER ||
+      primaryMembership?.roleKey === RoleKey.EXAM_OFFICER ||
+      primaryMembership?.roleKey === RoleKey.FINANCE_OFFICER
+    ) {
       redirectUrl = "/institution-admin";
     } else if (primaryMembership?.roleKey === RoleKey.LECTURER) {
       redirectUrl = "/lecturer";

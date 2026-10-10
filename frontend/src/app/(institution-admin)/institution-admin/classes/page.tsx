@@ -12,8 +12,8 @@ import { SearchFilters, Pagination } from "@/components/institution-admin/shared
 import {
   ClassesManager,
   ClassRowActions,
-  toDatetimeLocal,
 } from "@/components/institution-admin/classes/classes-manager";
+import { toDatetimeLocal } from "@/lib/utils/datetime-local";
 
 export const metadata: Metadata = {
   title: "Classes — Institution Admin",

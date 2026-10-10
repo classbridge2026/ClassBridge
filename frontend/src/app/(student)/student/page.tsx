@@ -3,6 +3,8 @@ import Link from "next/link";
 import { SessionStatus } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { requireStudentContext } from "@/lib/student/access";
+import { storageAdapter } from "@/lib/storage/adapter";
+import { InstitutionLogoMark } from "@/components/shared/institution-logo-mark";
 import {
   BookOpen,
   Layers,
@@ -174,22 +176,33 @@ export default async function StudentDashboardPage() {
 
   const todaysLearning = todaySessions;
 
+  const institution = await prisma.institution.findUnique({
+    where: { id: institutionId },
+    select: { logoStorageKey: true },
+  });
+  const logoUrl = institution?.logoStorageKey
+    ? storageAdapter.getFileUrl(institution.logoStorageKey)
+    : null;
+
   return (
     <div className="space-y-6">
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#2563EB] via-blue-700 to-[#0F172A] p-6 text-white shadow-md sm:p-8">
         <div className="pointer-events-none absolute -right-12 -top-12 h-64 w-64 rounded-full bg-white/10 blur-2xl" />
-        <div className="relative max-w-2xl space-y-2">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur-md">
-            <Sparkles className="h-3.5 w-3.5 text-blue-200" />
-            <span>Student Learning Portal</span>
+        <div className="relative flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-2xl space-y-2">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur-md">
+              <Sparkles className="h-3.5 w-3.5 text-blue-200" />
+              <span>Student Learning Portal</span>
+            </div>
+            <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
+              Welcome back, {user.fullName.split(" ")[0]}!
+            </h2>
+            <p className="text-xs leading-relaxed text-blue-100 sm:text-sm">
+              Enrolled at <strong className="font-bold text-white">{institutionName}</strong>. Join
+              live classes, submit assignments, and track your progress.
+            </p>
           </div>
-          <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-            Welcome back, {user.fullName.split(" ")[0]}!
-          </h2>
-          <p className="text-xs leading-relaxed text-blue-100 sm:text-sm">
-            Enrolled at <strong className="font-bold text-white">{institutionName}</strong>. Join
-            live classes, submit assignments, and track your progress.
-          </p>
+          <InstitutionLogoMark name={institutionName} logoUrl={logoUrl} tone="on-dark" />
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { MembershipStatus } from "@prisma/client";
+import { MembershipStatus, RoleKey } from "@prisma/client";
 import {
   Field,
   FormDialog,
@@ -9,23 +9,38 @@ import {
 import {
   SoftDeleteAction,
   TableActions,
+  IconActionLink,
 } from "@/components/institution-admin/shared/table-actions";
 import {
   createAdministratorAction,
   setAdministratorStatusAction,
   updateAdministratorAction,
 } from "@/features/institution-admin/people-actions";
+import { STAFF_ROLE_LABELS } from "@/lib/permissions/institution-privileges";
 
 export type AdministratorRow = {
   id: string;
   fullName: string;
   email: string;
+  roleKey: RoleKey;
   status: MembershipStatus;
 };
 
 const STATUS_OPTIONS = [
   { value: MembershipStatus.ACTIVE, label: "Active" },
   { value: MembershipStatus.INACTIVE, label: "Inactive" },
+];
+
+/** Invite form: officers only — Institution Admin is not selectable here. */
+const INVITE_ROLE_OPTIONS = [
+  { value: RoleKey.ADMIN_OFFICER, label: STAFF_ROLE_LABELS.ADMIN_OFFICER },
+  { value: RoleKey.EXAM_OFFICER, label: STAFF_ROLE_LABELS.EXAM_OFFICER },
+  { value: RoleKey.FINANCE_OFFICER, label: STAFF_ROLE_LABELS.FINANCE_OFFICER },
+];
+
+const EDIT_ROLE_OPTIONS = [
+  { value: RoleKey.INSTITUTION_ADMIN, label: STAFF_ROLE_LABELS.INSTITUTION_ADMIN },
+  ...INVITE_ROLE_OPTIONS,
 ];
 
 export function AdministratorsManager({
@@ -35,8 +50,8 @@ export function AdministratorsManager({
 }) {
   return (
     <FormDialog
-      title="Invite administrator"
-      description="Add an institution administrator. Platform Super Admins cannot be created here."
+      title="Invite staff"
+      description="Invite a campus officer. Privileges differ by role."
       triggerLabel="Invite administrator"
       action={createAdministratorAction}
       submitLabel="Invite"
@@ -44,6 +59,14 @@ export function AdministratorsManager({
     >
       <Field label="Full name" name="fullName" required />
       <Field label="Email" name="email" type="email" required />
+      <SelectField
+        label="Role"
+        name="roleKey"
+        options={INVITE_ROLE_OPTIONS}
+        defaultValue={RoleKey.ADMIN_OFFICER}
+        allowEmptyLabel={null}
+        required
+      />
       <Field
         label="Temporary password"
         name="temporaryPassword"
@@ -64,7 +87,7 @@ export function AdministratorEditDialog({
   return (
     <FormDialog
       title="Edit administrator"
-      description="Update name and membership status."
+      description="Update name, role, and membership status."
       triggerLabel="Edit"
       triggerVariant={triggerVariant}
       action={updateAdministratorAction}
@@ -72,6 +95,14 @@ export function AdministratorEditDialog({
     >
       <input type="hidden" name="id" value={admin.id} />
       <Field label="Full name" name="fullName" required defaultValue={admin.fullName} />
+      <SelectField
+        label="Role"
+        name="roleKey"
+        options={EDIT_ROLE_OPTIONS}
+        defaultValue={admin.roleKey}
+        allowEmptyLabel={null}
+        required
+      />
       <SelectField
         label="Status"
         name="status"
@@ -97,7 +128,8 @@ export function AdministratorStatusActions({
   adminName?: string;
   mode?: "icon" | "button";
 }) {
-  const nextStatus = status === MembershipStatus.ACTIVE ? MembershipStatus.INACTIVE : MembershipStatus.ACTIVE;
+  const nextStatus =
+    status === MembershipStatus.ACTIVE ? MembershipStatus.INACTIVE : MembershipStatus.ACTIVE;
 
   if (isSelf && status === MembershipStatus.ACTIVE) {
     return (
@@ -125,21 +157,13 @@ export function AdministratorStatusActions({
   );
 }
 
-export function AdministratorRowActions({
-  admin,
-  isSelf,
-}: {
-  admin: AdministratorRow;
-  isSelf: boolean;
-}) {
+/** View-only action for the administrators table. */
+export function AdministratorRowActions({ adminId }: { adminId: string }) {
   return (
     <TableActions>
-      <AdministratorEditDialog admin={admin} />
-      <AdministratorStatusActions
-        adminId={admin.id}
-        status={admin.status}
-        isSelf={isSelf}
-        adminName={admin.fullName}
+      <IconActionLink
+        href={`/institution-admin/administrators/${adminId}`}
+        title="View"
       />
     </TableActions>
   );

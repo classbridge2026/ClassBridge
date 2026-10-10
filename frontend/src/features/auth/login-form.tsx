@@ -8,11 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { submitLogin, type AuthFormState } from "@/features/auth/actions";
 import { Lock, Mail, AlertTriangle, ShieldCheck, KeyRound } from "lucide-react";
+import { showError, toUserMessage } from "@/lib/ui/swal";
 
 const initialState: AuthFormState | null = null;
 
 const seedAccounts = [
   { label: "Super Admin", email: "superadmin@classbridge.local", role: "Platform Super Admin" },
+  { label: "Transit Admin", email: "admin@transit.local", role: "Transit College Admin" },
+  { label: "Admin Officer", email: "admin-officer@transit.local", role: "Transit Admin Officer" },
+  { label: "Exam Officer", email: "exam-officer@transit.local", role: "Transit Exam Officer" },
+  { label: "Finance Officer", email: "finance-officer@transit.local", role: "Transit Finance Officer" },
   { label: "Transit Lecturer", email: "lecturer@transit.local", role: "Transit College Lecturer" },
   { label: "Transit Student", email: "student@transit.local", role: "Transit College Student" },
   { label: "Riverside Admin", email: "admin@riverside.local", role: "Riverside Inst. Admin" },
@@ -27,6 +32,10 @@ export function LoginForm() {
   useEffect(() => {
     if (state?.ok && state.redirectUrl) {
       router.push(state.redirectUrl);
+      return;
+    }
+    if (state && !state.ok && state.error) {
+      void showError(toUserMessage(state.error), "Sign-in failed");
     }
   }, [state, router]);
 

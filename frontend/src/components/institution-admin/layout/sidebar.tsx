@@ -33,20 +33,27 @@ export function InstitutionAdminSidebar({
   collapsed,
   onToggleCollapsed,
   onNavigate,
+  allowedHrefs,
   className,
 }: {
   institutionName: string;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
   onNavigate?: () => void;
+  /** When set, only these nav hrefs are shown (role privileges). */
+  allowedHrefs?: string[] | null;
   className?: string;
 }) {
   const pathname = usePathname();
 
-  const ungrouped = INST_ADMIN_NAV.filter((item) => !item.group);
-  const people = INST_ADMIN_NAV.filter((item) => item.group === "People");
-  const academic = INST_ADMIN_NAV.filter((item) => item.group === "Academic");
-  const trailing = INST_ADMIN_NAV.filter(
+  const nav = allowedHrefs
+    ? INST_ADMIN_NAV.filter((item) => allowedHrefs.includes(item.href))
+    : INST_ADMIN_NAV;
+
+  const ungrouped = nav.filter((item) => !item.group);
+  const people = nav.filter((item) => item.group === "People");
+  const academic = nav.filter((item) => item.group === "Academic");
+  const trailing = nav.filter(
     (item) => !item.group && !item.exact && item.href !== "/institution-admin",
   );
   const dashboard = ungrouped.find((item) => item.exact);
@@ -118,15 +125,21 @@ export function InstitutionAdminSidebar({
 
       <nav aria-label="Institution Admin" className="flex-1 space-y-1 overflow-y-auto px-2 pb-4">
         {dashboard ? renderItem(dashboard) : null}
-        <NavSection label="People" collapsed={collapsed}>
-          {people.map(renderItem)}
-        </NavSection>
-        <NavSection label="Academic" collapsed={collapsed}>
-          {academic.map(renderItem)}
-        </NavSection>
-        <NavSection label="Insights" collapsed={collapsed}>
-          {trailing.map(renderItem)}
-        </NavSection>
+        {people.length > 0 ? (
+          <NavSection label="People" collapsed={collapsed}>
+            {people.map(renderItem)}
+          </NavSection>
+        ) : null}
+        {academic.length > 0 ? (
+          <NavSection label="Academic" collapsed={collapsed}>
+            {academic.map(renderItem)}
+          </NavSection>
+        ) : null}
+        {trailing.length > 0 ? (
+          <NavSection label="Insights" collapsed={collapsed}>
+            {trailing.map(renderItem)}
+          </NavSection>
+        ) : null}
       </nav>
 
       {onToggleCollapsed ? (

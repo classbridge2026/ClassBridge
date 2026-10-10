@@ -9,8 +9,8 @@ import { InstStatusBadge } from "@/components/institution-admin/shared/status-ba
 import {
   EditClassDialog,
   ClassStatusButton,
-  toDatetimeLocal,
 } from "@/components/institution-admin/classes/classes-manager";
+import { toDatetimeLocal } from "@/lib/utils/datetime-local";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

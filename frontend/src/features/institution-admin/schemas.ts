@@ -40,15 +40,30 @@ export const updateLecturerSchema = z.object({
   status: z.nativeEnum(MembershipStatus),
 });
 
+const inviteStaffRoleSchema = z.enum([
+  "ADMIN_OFFICER",
+  "EXAM_OFFICER",
+  "FINANCE_OFFICER",
+]);
+
+const staffRoleSchema = z.enum([
+  "INSTITUTION_ADMIN",
+  "ADMIN_OFFICER",
+  "EXAM_OFFICER",
+  "FINANCE_OFFICER",
+]);
+
 export const createAdministratorSchema = z.object({
   fullName: z.string().trim().min(2, "Enter the administrator full name."),
   email: z.string().trim().toLowerCase().email("Enter a valid email address."),
+  roleKey: inviteStaffRoleSchema.default("ADMIN_OFFICER"),
   temporaryPassword: z.string().optional(),
 });
 
 export const updateAdministratorSchema = z.object({
   id: z.string().uuid(),
   fullName: z.string().trim().min(2, "Enter the administrator full name."),
+  roleKey: staffRoleSchema,
   status: z.nativeEnum(MembershipStatus),
 });
 

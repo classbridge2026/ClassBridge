@@ -9,6 +9,7 @@ import {
   type AuthFormState,
 } from "@/features/auth/actions";
 import { Mail, AlertTriangle, ArrowRight, CheckCircle2 } from "lucide-react";
+import { useActionAlerts } from "@/hooks/use-action-alerts";
 
 const initialState: AuthFormState | null = null;
 
@@ -17,6 +18,10 @@ export function ForgotPasswordForm() {
     submitForgotPassword,
     initialState,
   );
+  useActionAlerts(state, {
+    successTitle: "Check your email",
+    errorTitle: "Could not start reset",
+  });
 
   return (
     <form action={action} className="space-y-5" noValidate>

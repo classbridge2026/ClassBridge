@@ -3,6 +3,8 @@ import Link from "next/link";
 import { SessionStatus } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { requireLecturerContext } from "@/lib/lecturer/access";
+import { storageAdapter } from "@/lib/storage/adapter";
+import { InstitutionLogoMark } from "@/components/shared/institution-logo-mark";
 import {
   BookOpen,
   Users,
@@ -136,20 +138,33 @@ export default async function LecturerDashboardPage() {
 
   const titlePrefix = lecturerProfile.title ? `${lecturerProfile.title} ` : "";
 
+  const institution = await prisma.institution.findUnique({
+    where: { id: institutionId },
+    select: { logoStorageKey: true },
+  });
+  const logoUrl = institution?.logoStorageKey
+    ? storageAdapter.getFileUrl(institution.logoStorageKey)
+    : null;
+
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#2563EB]">
-          {institutionName}
-        </p>
-        <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-[#0F172A] sm:text-3xl">
-          Welcome, {titlePrefix}
-          {user.fullName}
-        </h2>
-        <p className="mt-2 max-w-2xl text-sm text-slate-600">
-          Manage courses, start live classes, grade assignments, and stay connected with your
-          students from one place.
-        </p>
+      <section className="rounded-2xl border border-slate-200 bg-gradient-to-br from-[#0F172A] via-[#1E3A5F] to-[#2563EB] p-6 text-white shadow-sm sm:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-200">
+              {institutionName}
+            </p>
+            <h2 className="mt-2 text-2xl font-extrabold tracking-tight sm:text-3xl">
+              Welcome, {titlePrefix}
+              {user.fullName}
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm text-blue-100">
+              Manage courses, start live classes, grade assignments, and stay connected with your
+              students from one place.
+            </p>
+          </div>
+          <InstitutionLogoMark name={institutionName} logoUrl={logoUrl} tone="on-dark" />
+        </div>
       </section>
 
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">

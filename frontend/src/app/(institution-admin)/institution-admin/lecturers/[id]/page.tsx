@@ -14,6 +14,8 @@ import {
   LecturerResetPasswordForm,
   LecturerStatusActions,
 } from "@/components/institution-admin/lecturers/lecturers-manager";
+import { UserAvatar } from "@/components/super-admin/shared/user-avatar";
+import { storageAdapter } from "@/lib/storage/adapter";
 
 export const metadata: Metadata = {
   title: "Lecturer detail — Institution Admin",
@@ -67,6 +69,9 @@ export default async function InstitutionAdminLecturerDetailPage({
   });
 
   const user = lecturer.institutionUser.user;
+  const avatarUrl = user.avatarStorageKey
+    ? storageAdapter.getFileUrl(user.avatarStorageKey)
+    : null;
   const editData = {
     id: lecturer.id,
     fullName: user.fullName,
@@ -113,34 +118,60 @@ export default async function InstitutionAdminLecturerDetailPage({
         <section className="space-y-4 lg:col-span-2">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-sm font-bold text-slate-900">Profile</h3>
-            <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="text-xs font-semibold text-slate-500">Full name</dt>
-                <dd className="mt-1 text-sm font-medium text-slate-900">{user.fullName}</dd>
+            <div className="mt-4 flex flex-col gap-5 sm:flex-row sm:items-start">
+              <div className="mx-auto shrink-0 sm:mx-0">
+                <div className="relative flex h-40 w-40 items-center justify-center overflow-hidden rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 shadow-inner ring-4 ring-slate-100">
+                  {avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- local/dynamic storage keys
+                    <img
+                      src={avatarUrl}
+                      alt={`${user.fullName} profile`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <UserAvatar
+                      name={user.fullName}
+                      src={null}
+                      size="lg"
+                      className="h-24 w-24 text-2xl ring-0"
+                    />
+                  )}
+                </div>
+                <p className="mt-2 text-center text-[11px] font-medium text-slate-400">
+                  Profile photo
+                </p>
               </div>
-              <div>
-                <dt className="text-xs font-semibold text-slate-500">Email</dt>
-                <dd className="mt-1 text-sm font-medium text-slate-900">{user.email}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-semibold text-slate-500">Title</dt>
-                <dd className="mt-1 text-sm font-medium text-slate-900">
-                  {lecturer.title || "—"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-semibold text-slate-500">Department</dt>
-                <dd className="mt-1 text-sm font-medium text-slate-900">
-                  {lecturer.department?.name ?? "—"}
-                </dd>
-              </div>
-              <div className="sm:col-span-2">
-                <dt className="text-xs font-semibold text-slate-500">Bio</dt>
-                <dd className="mt-1 text-sm text-slate-700 whitespace-pre-wrap">
-                  {lecturer.bio || "—"}
-                </dd>
-              </div>
-            </dl>
+              <dl className="min-w-0 flex-1 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <dt className="text-xs font-semibold text-slate-500">Full name</dt>
+                  <dd className="mt-1 text-sm font-medium text-slate-900">{user.fullName}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold text-slate-500">Email</dt>
+                  <dd className="mt-1 break-all text-sm font-medium text-slate-900">
+                    {user.email}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold text-slate-500">Title</dt>
+                  <dd className="mt-1 text-sm font-medium text-slate-900">
+                    {lecturer.title || "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold text-slate-500">Department</dt>
+                  <dd className="mt-1 text-sm font-medium text-slate-900">
+                    {lecturer.department?.name ?? "—"}
+                  </dd>
+                </div>
+                <div className="sm:col-span-2">
+                  <dt className="text-xs font-semibold text-slate-500">Bio</dt>
+                  <dd className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
+                    {lecturer.bio || "—"}
+                  </dd>
+                </div>
+              </dl>
+            </div>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

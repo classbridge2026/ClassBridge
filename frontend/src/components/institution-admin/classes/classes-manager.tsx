@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { SessionStatus } from "@prisma/client";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -13,11 +13,14 @@ import {
 import { FormDialog, Field, TextAreaField, SelectField } from "@/components/institution-admin/shared/form-dialog";
 import { Button } from "@/components/ui/button";
 import {
-  ConfirmActionDialog,
   IconActionButton,
   IconActionLink,
   TableActions,
 } from "@/components/institution-admin/shared/table-actions";
+import { toDatetimeLocal } from "@/lib/utils/datetime-local";
+import { showConfirm, showError, showSuccess, toUserMessage } from "@/lib/ui/swal";
+
+export { toDatetimeLocal };
 
 export type ClassFormItem = {
   id: string;
@@ -30,14 +33,6 @@ export type ClassFormItem = {
 };
 
 type Option = { value: string; label: string };
-
-export function toDatetimeLocal(value: string | Date | null | undefined): string {
-  if (!value) return "";
-  const d = typeof value === "string" ? new Date(value) : value;
-  if (Number.isNaN(d.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 export function CreateClassDialog({
   defaultOpen = false,
@@ -152,57 +147,48 @@ export function ClassStatusButton({
   mode?: "button" | "icon";
 }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const danger = nextStatus === "CANCELLED";
 
-  return (
-    <>
-      {mode === "icon" ? (
-        <IconActionButton
-          title={label}
-          tone={danger ? "rose" : "amber"}
-          icon={danger ? faBan : faCheck}
-          disabled={pending}
-          onClick={() => setOpen(true)}
-        />
-      ) : (
-        <Button
-          type="button"
-          size="sm"
-          variant={variant}
-          disabled={pending}
-          onClick={() => setOpen(true)}
-        >
-          <FontAwesomeIcon
-            icon={danger ? faBan : faCheck}
-            className="mr-1.5 h-3 w-3"
-            aria-hidden
-          />
-          {label}
-        </Button>
-      )}
-      <ConfirmActionDialog
-        open={open}
-        title={`${label} class?`}
-        description={
-          danger
-            ? "This cancels the class session. Attendance and history are retained."
-            : "Confirm this status change for the class session."
+  const run = () => {
+    startTransition(async () => {
+      const confirmed = await showConfirm({
+        title: `${label} class?`,
+        text: danger
+          ? "This cancels the class session. Attendance and history are retained."
+          : "Confirm this status change for the class session.",
+        confirmText: label,
+        danger,
+      });
+      if (!confirmed) return;
+
+      try {
+        const result = await setClassStatusAction(id, nextStatus);
+        if (!result.ok) {
+          void showError(toUserMessage(result.error), "Could not update class");
+          return;
         }
-        confirmLabel={label}
-        danger={danger}
-        pending={pending}
-        onCancel={() => setOpen(false)}
-        onConfirm={() => {
-          startTransition(async () => {
-            await setClassStatusAction(id, nextStatus);
-            setOpen(false);
-            router.refresh();
-          });
-        }}
-      />
-    </>
+        void showSuccess(result.message ?? `Class marked as ${label.toLowerCase()}.`);
+        router.refresh();
+      } catch (error) {
+        void showError(error, "Could not update class");
+      }
+    });
+  };
+
+  return mode === "icon" ? (
+    <IconActionButton
+      title={label}
+      tone={danger ? "rose" : "amber"}
+      icon={danger ? faBan : faCheck}
+      disabled={pending}
+      onClick={run}
+    />
+  ) : (
+    <Button type="button" size="sm" variant={variant} disabled={pending} onClick={run}>
+      <FontAwesomeIcon icon={danger ? faBan : faCheck} className="mr-1.5 h-3 w-3" aria-hidden />
+      {label}
+    </Button>
   );
 }
 

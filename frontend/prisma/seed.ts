@@ -90,13 +90,23 @@ async function upsertMembership(data: {
 async function main() {
   const passwordHash = await bcrypt.hash(DEV_SEED_PASSWORD, 12);
 
-  const [superAdminRole, institutionAdminRole, lecturerRole, studentRole] =
-    await Promise.all([
-      upsertRole(RoleKey.SUPER_ADMIN, "Super Admin"),
-      upsertRole(RoleKey.INSTITUTION_ADMIN, "Institution Admin"),
-      upsertRole(RoleKey.LECTURER, "Lecturer"),
-      upsertRole(RoleKey.STUDENT, "Student"),
-    ]);
+  const [
+    superAdminRole,
+    institutionAdminRole,
+    adminOfficerRole,
+    examOfficerRole,
+    financeOfficerRole,
+    lecturerRole,
+    studentRole,
+  ] = await Promise.all([
+    upsertRole(RoleKey.SUPER_ADMIN, "Super Admin"),
+    upsertRole(RoleKey.INSTITUTION_ADMIN, "Institution Admin"),
+    upsertRole(RoleKey.ADMIN_OFFICER, "Admin Officer"),
+    upsertRole(RoleKey.EXAM_OFFICER, "Exam Officer"),
+    upsertRole(RoleKey.FINANCE_OFFICER, "Finance Officer"),
+    upsertRole(RoleKey.LECTURER, "Lecturer"),
+    upsertRole(RoleKey.STUDENT, "Student"),
+  ]);
 
   void superAdminRole;
 
@@ -155,10 +165,49 @@ async function main() {
     status: UserStatus.ACTIVE,
   });
 
+  const transitAdminOfficer = await upsertUser({
+    email: "admin-officer@transit.local",
+    fullName: "Fatmata Bangura",
+    passwordHash,
+    status: UserStatus.ACTIVE,
+  });
+
+  const transitExamOfficer = await upsertUser({
+    email: "exam-officer@transit.local",
+    fullName: "Mohamed Conteh",
+    passwordHash,
+    status: UserStatus.ACTIVE,
+  });
+
+  const transitFinanceOfficer = await upsertUser({
+    email: "finance-officer@transit.local",
+    fullName: "Isatu Koroma",
+    passwordHash,
+    status: UserStatus.ACTIVE,
+  });
+
   await upsertMembership({
     institutionId: transit.id,
     userId: transitAdmin.id,
     roleId: institutionAdminRole.id,
+  });
+
+  await upsertMembership({
+    institutionId: transit.id,
+    userId: transitAdminOfficer.id,
+    roleId: adminOfficerRole.id,
+  });
+
+  await upsertMembership({
+    institutionId: transit.id,
+    userId: transitExamOfficer.id,
+    roleId: examOfficerRole.id,
+  });
+
+  await upsertMembership({
+    institutionId: transit.id,
+    userId: transitFinanceOfficer.id,
+    roleId: financeOfficerRole.id,
   });
 
   const lecturerMembership = await upsertMembership({

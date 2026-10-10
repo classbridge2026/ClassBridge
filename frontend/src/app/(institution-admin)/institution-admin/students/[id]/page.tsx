@@ -14,6 +14,8 @@ import {
   StudentEditDialog,
   StudentStatusActions,
 } from "@/components/institution-admin/students/students-manager";
+import { UserAvatar } from "@/components/super-admin/shared/user-avatar";
+import { storageAdapter } from "@/lib/storage/adapter";
 
 export const metadata: Metadata = {
   title: "Student detail — Institution Admin",
@@ -74,6 +76,9 @@ export default async function InstitutionAdminStudentDetailPage({
   ]);
 
   const user = student.institutionUser.user;
+  const avatarUrl = user.avatarStorageKey
+    ? storageAdapter.getFileUrl(user.avatarStorageKey)
+    : null;
   const attendanceSummary = {
     present: student.attendance.filter((a) => a.status === "PRESENT").length,
     late: student.attendance.filter((a) => a.status === "LATE").length,
@@ -130,28 +135,54 @@ export default async function InstitutionAdminStudentDetailPage({
         <section className="space-y-4 lg:col-span-2">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-sm font-bold text-slate-900">Profile</h3>
-            <dl className="mt-4 grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="text-xs font-semibold text-slate-500">Full name</dt>
-                <dd className="mt-1 text-sm font-medium text-slate-900">{user.fullName}</dd>
+            <div className="mt-4 flex flex-col gap-5 sm:flex-row sm:items-start">
+              <div className="mx-auto shrink-0 sm:mx-0">
+                <div className="relative flex h-40 w-40 items-center justify-center overflow-hidden rounded-2xl border-2 border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 shadow-inner ring-4 ring-slate-100">
+                  {avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- local/dynamic storage keys
+                    <img
+                      src={avatarUrl}
+                      alt={`${user.fullName} profile`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <UserAvatar
+                      name={user.fullName}
+                      src={null}
+                      size="lg"
+                      className="h-24 w-24 text-2xl ring-0"
+                    />
+                  )}
+                </div>
+                <p className="mt-2 text-center text-[11px] font-medium text-slate-400">
+                  Profile photo
+                </p>
               </div>
-              <div>
-                <dt className="text-xs font-semibold text-slate-500">Email</dt>
-                <dd className="mt-1 text-sm font-medium text-slate-900">{user.email}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-semibold text-slate-500">Student ID</dt>
-                <dd className="mt-1 font-mono text-sm text-slate-900">
-                  {student.studentNumber || "—"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-semibold text-slate-500">Enrollment date</dt>
-                <dd className="mt-1 text-sm text-slate-900">
-                  {student.createdAt.toLocaleDateString()}
-                </dd>
-              </div>
-            </dl>
+              <dl className="min-w-0 flex-1 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <dt className="text-xs font-semibold text-slate-500">Full name</dt>
+                  <dd className="mt-1 text-sm font-medium text-slate-900">{user.fullName}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold text-slate-500">Email</dt>
+                  <dd className="mt-1 break-all text-sm font-medium text-slate-900">
+                    {user.email}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold text-slate-500">Student ID</dt>
+                  <dd className="mt-1 font-mono text-sm text-slate-900">
+                    {student.studentNumber || "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-semibold text-slate-500">Enrollment date</dt>
+                  <dd className="mt-1 text-sm text-slate-900">
+                    {student.createdAt.toLocaleDateString()}
+                  </dd>
+                </div>
+              </dl>
+            </div>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

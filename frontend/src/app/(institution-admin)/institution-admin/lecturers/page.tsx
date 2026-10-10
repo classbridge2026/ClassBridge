@@ -16,6 +16,8 @@ import {
   LecturersManager,
   LecturerRowActions,
 } from "@/components/institution-admin/lecturers/lecturers-manager";
+import { UserAvatar } from "@/components/super-admin/shared/user-avatar";
+import { storageAdapter } from "@/lib/storage/adapter";
 
 export const metadata: Metadata = {
   title: "Lecturers — Institution Admin",
@@ -122,16 +124,22 @@ export default async function InstitutionAdminLecturersPage({
           <div className="grid gap-3 md:hidden">
             {lecturers.map((lecturer) => {
               const user = lecturer.institutionUser.user;
+              const avatarUrl = user.avatarStorageKey
+                ? storageAdapter.getFileUrl(user.avatarStorageKey)
+                : null;
               return (
                 <div
                   key={lecturer.id}
                   className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold text-slate-900">{user.fullName}</p>
-                      <p className="mt-0.5 truncate text-xs text-slate-500">{user.email}</p>
-                      <p className="mt-1 text-xs text-slate-600">{lecturer.title || "No title"}</p>
+                    <div className="flex min-w-0 items-start gap-3">
+                      <UserAvatar name={user.fullName} src={avatarUrl} size="md" />
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-slate-900">{user.fullName}</p>
+                        <p className="mt-0.5 truncate text-xs text-slate-500">{user.email}</p>
+                        <p className="mt-1 text-xs text-slate-600">{lecturer.title || "No title"}</p>
+                      </div>
                     </div>
                     <InstStatusBadge status={lecturer.institutionUser.status} />
                   </div>
@@ -146,18 +154,7 @@ export default async function InstitutionAdminLecturersPage({
                     </div>
                   </dl>
                   <div className="mt-3 border-t border-slate-100 pt-3">
-                    <LecturerRowActions
-                      lecturer={{
-                        id: lecturer.id,
-                        fullName: user.fullName,
-                        title: lecturer.title,
-                        bio: lecturer.bio,
-                        departmentId: lecturer.departmentId,
-                        status: lecturer.institutionUser.status,
-                        userId: user.id,
-                      }}
-                      departments={departmentOptions}
-                    />
+                    <LecturerRowActions lecturerId={lecturer.id} />
                   </div>
                 </div>
               );
@@ -166,46 +163,60 @@ export default async function InstitutionAdminLecturersPage({
 
           <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:block">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px] text-left text-sm">
+              <table className="w-full table-fixed text-left text-sm">
+                <colgroup>
+                  <col className="w-[32%]" />
+                  <col className="w-[16%]" />
+                  <col className="w-[18%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[12%]" />
+                </colgroup>
                 <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-wide text-slate-500">
                   <tr>
-                    <th className="px-4 py-3">Lecturer</th>
-                    <th className="px-4 py-3">Email</th>
-                    <th className="px-4 py-3">Title</th>
-                    <th className="px-4 py-3">Department</th>
-                    <th className="px-4 py-3">Courses</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
+                    <th className="px-3 py-3 text-left">Lecturer</th>
+                    <th className="px-3 py-3 text-left">Title</th>
+                    <th className="px-3 py-3 text-left">Department</th>
+                    <th className="px-3 py-3 text-left">Courses</th>
+                    <th className="px-3 py-3 text-left">Status</th>
+                    <th className="px-3 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {lecturers.map((lecturer) => {
                     const user = lecturer.institutionUser.user;
+                    const avatarUrl = user.avatarStorageKey
+                      ? storageAdapter.getFileUrl(user.avatarStorageKey)
+                      : null;
                     return (
                       <tr key={lecturer.id} className="hover:bg-slate-50/80">
-                        <td className="px-4 py-3.5 font-semibold text-slate-900">{user.fullName}</td>
-                        <td className="px-4 py-3.5 text-slate-600">{user.email}</td>
-                        <td className="px-4 py-3.5 text-slate-600">{lecturer.title || "—"}</td>
-                        <td className="px-4 py-3.5 text-slate-600">
-                          {lecturer.department?.name ?? "—"}
+                        <td className="px-3 py-3 align-middle">
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <UserAvatar name={user.fullName} src={avatarUrl} size="sm" />
+                            <div className="min-w-0">
+                              <p className="truncate font-semibold text-slate-900">
+                                {user.fullName}
+                              </p>
+                              <p className="truncate text-xs text-slate-500">{user.email}</p>
+                            </div>
+                          </div>
                         </td>
-                        <td className="px-4 py-3.5 text-slate-600">{lecturer._count.courses}</td>
-                        <td className="px-4 py-3.5">
+                        <td className="px-3 py-3 align-middle text-slate-600">
+                          <span className="block truncate">{lecturer.title || "—"}</span>
+                        </td>
+                        <td className="px-3 py-3 align-middle text-slate-600">
+                          <span className="block truncate">
+                            {lecturer.department?.name ?? "—"}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 align-middle tabular-nums text-slate-600">
+                          {lecturer._count.courses}
+                        </td>
+                        <td className="px-3 py-3 align-middle">
                           <InstStatusBadge status={lecturer.institutionUser.status} />
                         </td>
-                        <td className="px-4 py-3.5 text-right">
-                          <LecturerRowActions
-                            lecturer={{
-                              id: lecturer.id,
-                              fullName: user.fullName,
-                              title: lecturer.title,
-                              bio: lecturer.bio,
-                              departmentId: lecturer.departmentId,
-                              status: lecturer.institutionUser.status,
-                              userId: user.id,
-                            }}
-                            departments={departmentOptions}
-                          />
+                        <td className="px-3 py-3 align-middle text-right">
+                          <LecturerRowActions lecturerId={lecturer.id} />
                         </td>
                       </tr>
                     );

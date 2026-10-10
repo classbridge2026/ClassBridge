@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import {
-  GraduationCap,
-  Users,
-  BookOpen,
-  BookMarked,
-  Building2,
-  Calendar,
-  ClipboardCheck,
-  Activity,
-} from "lucide-react";
+  faBookOpen,
+  faBuilding,
+  faCalendarDays,
+  faChartLine,
+  faClipboardCheck,
+  faGraduationCap,
+  faLayerGroup,
+  faChalkboardTeacher,
+} from "@fortawesome/free-solid-svg-icons";
 import { Prisma, SessionStatus } from "@prisma/client";
 import { requireInstitutionAdmin } from "@/lib/permissions/institution-admin";
 import { prisma } from "@/lib/db/prisma";
@@ -267,14 +267,14 @@ export default async function ReportsPage({
       </Suspense>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <InstStatCard label="Students" value={studentCount} icon={GraduationCap} tone="blue" />
-        <InstStatCard label="Lecturers" value={lecturerCount} icon={Users} tone="green" />
-        <InstStatCard label="Courses" value={courseCount} icon={BookOpen} tone="violet" />
-        <InstStatCard label="Programs" value={programCount} icon={BookMarked} tone="sky" />
-        <InstStatCard label="Departments" value={departmentCount} icon={Building2} tone="slate" />
-        <InstStatCard label="Classes" value={classCount} icon={Calendar} tone="amber" />
-        <InstStatCard label="Attendance" value={attendanceCount} icon={ClipboardCheck} tone="rose" />
-        <InstStatCard label="Activity" value={activityCount} icon={Activity} tone="slate" />
+        <InstStatCard label="Students" value={studentCount} icon={faGraduationCap} tone="blue" />
+        <InstStatCard label="Lecturers" value={lecturerCount} icon={faChalkboardTeacher} tone="green" />
+        <InstStatCard label="Courses" value={courseCount} icon={faBookOpen} tone="violet" />
+        <InstStatCard label="Programs" value={programCount} icon={faLayerGroup} tone="sky" />
+        <InstStatCard label="Departments" value={departmentCount} icon={faBuilding} tone="slate" />
+        <InstStatCard label="Classes" value={classCount} icon={faCalendarDays} tone="amber" />
+        <InstStatCard label="Attendance" value={attendanceCount} icon={faClipboardCheck} tone="rose" />
+        <InstStatCard label="Activity" value={activityCount} icon={faChartLine} tone="slate" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { requireInstitutionAdmin } from "@/lib/permissions/institution-admin";
+import { requireFullInstitutionAdmin } from "@/lib/permissions/institution-admin";
 import { prisma } from "@/lib/db/prisma";
+import { storageAdapter } from "@/lib/storage/adapter";
 import { InstPageHeader } from "@/components/institution-admin/shared/page-header";
 import { InstitutionSettingsForm } from "@/components/institution-admin/settings/settings-form";
 
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
-  const { institutionId } = await requireInstitutionAdmin();
+  const { institutionId } = await requireFullInstitutionAdmin();
 
   const institution = await prisma.institution.findUnique({
     where: { id: institutionId },
@@ -25,6 +26,7 @@ export default async function SettingsPage() {
       timezone: true,
       slug: true,
       status: true,
+      logoStorageKey: true,
     },
   });
 
@@ -35,6 +37,10 @@ export default async function SettingsPage() {
       </p>
     );
   }
+
+  const logoUrl = institution.logoStorageKey
+    ? storageAdapter.getFileUrl(institution.logoStorageKey)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -60,6 +66,7 @@ export default async function SettingsPage() {
           city: institution.city,
           description: institution.description,
           timezone: institution.timezone,
+          logoUrl,
         }}
       />
     </div>

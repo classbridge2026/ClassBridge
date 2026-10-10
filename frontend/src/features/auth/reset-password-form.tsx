@@ -10,6 +10,7 @@ import {
   type AuthFormState,
 } from "@/features/auth/actions";
 import { Lock, AlertTriangle, ArrowRight, CheckCircle2 } from "lucide-react";
+import { useActionAlerts } from "@/hooks/use-action-alerts";
 
 const initialState: AuthFormState | null = null;
 
@@ -19,10 +20,14 @@ export function ResetPasswordForm({ token }: { token?: string }) {
     submitResetPassword,
     initialState,
   );
+  useActionAlerts(state, {
+    successTitle: "Password updated",
+    errorTitle: "Could not reset password",
+  });
 
   useEffect(() => {
     if (state?.ok && state.redirectUrl) {
-      const timer = setTimeout(() => router.push(state.redirectUrl!), 1200);
+      const timer = setTimeout(() => router.push(state.redirectUrl!), 1400);
       return () => clearTimeout(timer);
     }
   }, [state, router]);
