@@ -1,6 +1,11 @@
 import { RoleKey } from "@prisma/client";
 
 /** Campus console roles (not lecturer/student). */
+export type InstitutionStaffRole = Extract<
+  RoleKey,
+  "INSTITUTION_ADMIN" | "ADMIN_OFFICER" | "EXAM_OFFICER" | "FINANCE_OFFICER"
+>;
+
 export const INSTITUTION_STAFF_ROLES: RoleKey[] = [
   RoleKey.INSTITUTION_ADMIN,
   RoleKey.ADMIN_OFFICER,
@@ -8,10 +13,7 @@ export const INSTITUTION_STAFF_ROLES: RoleKey[] = [
   RoleKey.FINANCE_OFFICER,
 ];
 
-export const STAFF_ROLE_LABELS: Record<
-  (typeof INSTITUTION_STAFF_ROLES)[number],
-  string
-> = {
+export const STAFF_ROLE_LABELS: Record<InstitutionStaffRole, string> = {
   INSTITUTION_ADMIN: "Institution Admin",
   ADMIN_OFFICER: "Admin Officer",
   EXAM_OFFICER: "Exam Officer",
@@ -33,7 +35,7 @@ export const INVITABLE_STAFF_ROLES: RoleKey[] = [
  * - Exam Officer: students, courses, classes, reports (assessments later)
  * - Finance Officer: students + reports (fees/billing later)
  */
-const ROLE_NAV: Record<(typeof INSTITUTION_STAFF_ROLES)[number], string[] | "*"> = {
+const ROLE_NAV: Record<InstitutionStaffRole, string[] | "*"> = {
   INSTITUTION_ADMIN: "*",
   ADMIN_OFFICER: [
     "/institution-admin",
@@ -62,7 +64,7 @@ const ROLE_NAV: Record<(typeof INSTITUTION_STAFF_ROLES)[number], string[] | "*">
   ],
 };
 
-export function isInstitutionStaffRole(roleKey: RoleKey): boolean {
+export function isInstitutionStaffRole(roleKey: RoleKey): roleKey is InstitutionStaffRole {
   return INSTITUTION_STAFF_ROLES.includes(roleKey);
 }
 

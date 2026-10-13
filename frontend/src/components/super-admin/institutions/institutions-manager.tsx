@@ -74,9 +74,16 @@ export function InstitutionsManager({
   const [isPending, startTransition] = useTransition();
   const [adminEmail, setAdminEmail] = useState("");
   const [adminFullName, setAdminFullName] = useState("");
-  const [emailCheck, setEmailCheck] = useState<AdminEmailCheckResult | null>(null);
-  const [emailChecking, setEmailChecking] = useState(false);
+  const [emailLookup, setEmailLookup] = useState<{
+    email: string;
+    result: AdminEmailCheckResult;
+  } | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
+  const trimmedAdminEmail = adminEmail.trim();
+  const adminEmailValid = trimmedAdminEmail.includes("@");
+  const emailCheck =
+    adminEmailValid && emailLookup?.email === trimmedAdminEmail ? emailLookup.result : null;
+  const emailChecking = adminEmailValid && emailLookup?.email !== trimmedAdminEmail;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -103,19 +110,13 @@ export function InstitutionsManager({
 
   useEffect(() => {
     const email = adminEmail.trim();
-    if (!email || !email.includes("@")) {
-      setEmailCheck(null);
-      setEmailChecking(false);
-      return;
-    }
+    if (!email.includes("@")) return;
 
     let cancelled = false;
-    setEmailChecking(true);
     const timer = window.setTimeout(() => {
       void checkAdminEmailAction(email).then((result) => {
         if (!cancelled) {
-          setEmailCheck(result);
-          setEmailChecking(false);
+          setEmailLookup({ email, result });
           if (result.ok && result.registered && result.fullName) {
             setAdminFullName((current) => current.trim() || result.fullName || "");
           }
@@ -134,7 +135,7 @@ export function InstitutionsManager({
     setFormState(initialFormState);
     setAdminEmail("");
     setAdminFullName("");
-    setEmailCheck(null);
+    setEmailLookup(null);
   }
 
   function openEdit(item: InstitutionListItem) {

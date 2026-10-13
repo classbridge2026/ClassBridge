@@ -14,13 +14,15 @@ export function PeoplePieChart({
   const cx = size / 2;
   const cy = size / 2;
 
-  let cumulative = 0;
-  const slices = items
-    .filter((item) => item.value > 0)
-    .map((item) => {
-      const start = (cumulative / total) * 2 * Math.PI - Math.PI / 2;
-      cumulative += item.value;
-      const end = (cumulative / total) * 2 * Math.PI - Math.PI / 2;
+  const visible = items.filter((item) => item.value > 0);
+  const offsets = visible.map((_, index) =>
+    visible.slice(0, index).reduce((sum, item) => sum + item.value, 0),
+  );
+  const slices = visible
+    .map((item, index) => {
+      const before = offsets[index];
+      const start = (before / total) * 2 * Math.PI - Math.PI / 2;
+      const end = ((before + item.value) / total) * 2 * Math.PI - Math.PI / 2;
       const largeArc = end - start > Math.PI ? 1 : 0;
       const ox1 = cx + outer * Math.cos(start);
       const oy1 = cy + outer * Math.sin(start);

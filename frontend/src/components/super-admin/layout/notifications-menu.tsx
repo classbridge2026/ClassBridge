@@ -35,13 +35,18 @@ export function SuperAdminNotificationsMenu({
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState(initialNotifications);
   const [unread, setUnread] = useState(unreadCount);
+  const [syncedProps, setSyncedProps] = useState({ initialNotifications, unreadCount });
   const [isPending, startTransition] = useTransition();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  if (
+    syncedProps.initialNotifications !== initialNotifications ||
+    syncedProps.unreadCount !== unreadCount
+  ) {
+    setSyncedProps({ initialNotifications, unreadCount });
     setItems(initialNotifications);
     setUnread(unreadCount);
-  }, [initialNotifications, unreadCount]);
+  }
 
   useEffect(() => {
     function onPointerDown(event: MouseEvent) {

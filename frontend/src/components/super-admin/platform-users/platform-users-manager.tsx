@@ -40,8 +40,14 @@ export function PlatformUsersManager({
   const [isPending, startTransition] = useTransition();
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
-  const [emailCheck, setEmailCheck] = useState<PlatformEmailCheckResult | null>(null);
-  const [emailChecking, setEmailChecking] = useState(false);
+  const [emailLookup, setEmailLookup] = useState<{
+    email: string;
+    result: PlatformEmailCheckResult;
+  } | null>(null);
+  const trimmedEmail = email.trim();
+  const emailValid = trimmedEmail.includes("@");
+  const emailCheck = emailValid && emailLookup?.email === trimmedEmail ? emailLookup.result : null;
+  const emailChecking = emailValid && emailLookup?.email !== trimmedEmail;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -58,19 +64,13 @@ export function PlatformUsersManager({
 
   useEffect(() => {
     const value = email.trim();
-    if (!value || !value.includes("@")) {
-      setEmailCheck(null);
-      setEmailChecking(false);
-      return;
-    }
+    if (!value.includes("@")) return;
 
     let cancelled = false;
-    setEmailChecking(true);
     const timer = window.setTimeout(() => {
       void checkPlatformUserEmailAction(value).then((result) => {
         if (cancelled) return;
-        setEmailCheck(result);
-        setEmailChecking(false);
+        setEmailLookup({ email: value, result });
         if (result.ok && result.registered && result.fullName) {
           setFullName((current) => current.trim() || result.fullName || "");
         }
@@ -90,7 +90,7 @@ export function PlatformUsersManager({
     setError(null);
     setEmail("");
     setFullName("");
-    setEmailCheck(null);
+    setEmailLookup(null);
   }
 
   return (

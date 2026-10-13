@@ -13,18 +13,19 @@ export function SuperAdminGlobalSearch({ className }: { className?: string }) {
   const listId = useId();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const [results, setResults] = useState<SuperAdminSearchResult>({
+  const [fetchedResults, setResults] = useState<SuperAdminSearchResult>({
     institutions: [],
     users: [],
   });
   const [isPending, startTransition] = useTransition();
   const containerRef = useRef<HTMLDivElement>(null);
+  const queryTooShort = query.trim().length < 2;
+  const results: SuperAdminSearchResult = queryTooShort
+    ? { institutions: [], users: [] }
+    : fetchedResults;
 
   useEffect(() => {
-    if (query.trim().length < 2) {
-      setResults({ institutions: [], users: [] });
-      return;
-    }
+    if (query.trim().length < 2) return;
 
     const timer = window.setTimeout(() => {
       startTransition(async () => {
